@@ -46,6 +46,7 @@ class BLstats(faust.Record):
     user_bad: bool = False
     msg_bad: dict = {}
 
+bl_stats_topic = app.topic('stats_bl',key_type=str, value_type=BLstats)
 
 bl_stats = app.Table(
    'stats_bl',
@@ -62,10 +63,7 @@ async def process(stream):
     async for key,value in stream.items():
         # Обновляем общую статистику
         print(1)
-        stats = bl_stats[key]
-        if stats is None:
-            stats = BLstats()
-        print(2)
+        stats = BLstats()
         stats.user_src=key
         stats.user_dst=value.dst
         print(stats)
@@ -75,9 +73,10 @@ async def process(stream):
         
         #Find src user
         if key in list(users_bl.for_user_acl.keys()):
-            stats.user_bad=True
             #Check dst user
             if value.dst in users_bl.for_user_acl[key]:
+                print(2)
+                stats.user_bad=True
                 await output_topic.send(value=f"Block src: {key} - dst:{value.dst}")
             #Replace bad word on ###
             old_msg=value.msg
@@ -90,6 +89,8 @@ async def process(stream):
             print(value)
             print(stats)
             bl_stats[key] = stats
+            print(bl_stats[key])
+            await bl_stats_topic.send(key=key,value=bl_stats[key])
 
             
 
