@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+
+  faust:
+    image: faust_stream:1
+    network_mode: host
+    environment:
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./kafka/init_conf.py:/app/init_conf.py
