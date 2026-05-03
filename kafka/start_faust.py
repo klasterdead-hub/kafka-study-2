@@ -17,20 +17,21 @@ async def process(stream):
     async for key,value in stream.items():
 
         # Обновляем общую статистику
-        bl_user_info = tb.bl_user[key]
-        if bl_user_info is None:
+        if key in tb.bl_user:
+            bl_user_info=tb.bl_user[key]
+        else:
             bl_user_info = BL_USER()
-
-
-        bl_msg_info = tb.bl_msg[key]
-        if bl_msg_info is None:
-            bl_msg_info = BL_MSG()
-
-
+            bl_user_info.my_block=[]
+            
         bl_user_info.user_src=key
         bl_user_info.user_dst=value.dst
         bl_user_info.user_bad = False
-        
+
+        if key in tb.bl_msg:
+            bl_msg_info=tb.bl_msg[key]
+        else:
+            bl_msg_info = BL_MSG()
+            bl_msg_info.my_bad_words=[]
         bl_msg_info.user_src=key
         bl_msg_info.user_dst=value.dst
 
@@ -42,7 +43,7 @@ async def process(stream):
         #Replace bad word on ###
         old_msg=value.msg
         for i in bl_msg_info.my_bad_words:
-            tb.bl_msg[key] = bl_msg_info
+            #tb.bl_msg[key] = bl_msg_info
             value.msg=re.sub(i,"###",value.msg)
             
         #Check if changes MSG
@@ -53,7 +54,7 @@ async def process(stream):
         
         #Send msg when user not blocked
         if bl_user_info.user_bad == False:
-            tb.bl_user[key] = bl_user_info
+            #tb.bl_user[key] = bl_user_info
             await tp.filtered_topic.send(key=key,value=bl_msg_info)
             
         
@@ -89,7 +90,9 @@ async def add_user_bl(web, request, user_id,user_block):
            'user_id': user_id
        }, status=500)
 
+
 @app.page('/del_user_bl/{user_id}/{user_block}')
+@app.table_route(table=tb.bl_user, match_info='user_id')
 async def del_user_bl(web, request, user_id,user_block):
    try:
         #Проверка и формировка данных для ключа
@@ -103,6 +106,8 @@ async def del_user_bl(web, request, user_id,user_block):
         if user_block in bl_user_info.my_block:
             pos=bl_user_info.my_block.index(user_block)
             del bl_user_info.my_block[pos]
+        #ChangeLog in Broker
+        tb.bl_user[user_id] = bl_user_info
         return web.json({
            'bl_list': bl_user_info.my_block,
            'user_id': user_id
@@ -114,6 +119,7 @@ async def del_user_bl(web, request, user_id,user_block):
        }, status=500)
 
 @app.page('/add_bad_word/{user_id}/{word}')
+@app.table_route(table=tb.bl_msg, match_info='user_id')
 async def add_bad_word(web,request, user_id, word):
    try:
         #Проверка и формировка данных для ключа
@@ -137,6 +143,7 @@ async def add_bad_word(web,request, user_id, word):
        }, status=500)
 
 @app.page('/del_bad_word/{user_id}/{word}')
+@app.table_route(table=tb.bl_msg, match_info='user_id')
 async def del_bad_word(web,request,user_id, word):
    try:
         #Проверка и формировка данных для ключа
