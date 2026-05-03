@@ -14,10 +14,10 @@ class BL_USER(faust.Record):
     user_src: str = ""
     user_dst: str = ""
     user_bad: bool = False
-    my_block: dict = ["user3","user4"]
+    my_block: dict = []
 
 class BL_MSG(faust.Record):
     user_src: str = ""
     user_dst: str = ""
     user_msg: dict = {}
-    my_bad_words: list = ["asshole","stupid"]
+    my_bad_words: list = []

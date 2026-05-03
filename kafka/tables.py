@@ -14,12 +14,14 @@ class _Init_Tables:
         'blocked_users',
         default=BL_USER,
         partitions=3,
-        help='Таблица заблокированных пользователей'
+        help='Таблица заблокированных пользователей',
+        use_partitioner=True
         )
 
         self.bl_msg = self.app.Table(
         'filtered_messages',
         default=BL_MSG,
         partitions=3,
-        help='Таблица блокировок сообщений'
+        help='Таблица блокировок сообщений',
+        use_partitioner=True
         )
